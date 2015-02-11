@@ -70,7 +70,7 @@ func StartServer(addr string) {
 		conn.readLoop()
 	})
 
-	http.Handle("/", http.FileServer(http.Dir("./pipelisten")))
+	http.Handle("/", http.FileServer(http.Dir("./pipelisten/web")))
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

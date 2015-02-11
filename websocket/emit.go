@@ -2,8 +2,8 @@ package websocket
 
 import "time"
 
-func EmitAddLogLine(start time.Time, prefix, line string) {
-	body := &websocketBody{Event: "addLogLine", Args: []interface{}{start, prefix, line}}
+func EmitAddLine(start time.Time, prefix, line string) {
+	body := &websocketBody{Event: "addLine", Args: []interface{}{start, prefix, line}}
 
 	websocketTable.RLock()
 	defer websocketTable.RUnlock()

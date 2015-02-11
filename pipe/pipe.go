@@ -24,7 +24,7 @@ func handleConn(conn net.Conn) {
 			log.Printf("Line has no separator: %s", line)
 			continue
 		}
-		websocket.EmitAddLogLine(startTime, line[0:separator], line[separator+1:])
+		websocket.EmitAddLine(startTime, line[0:separator], line[separator+1:])
 	}
 }
 
