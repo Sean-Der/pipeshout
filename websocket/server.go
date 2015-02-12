@@ -1,9 +1,11 @@
 package websocket
 
 import (
+	"encoding/json"
 	"log"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -11,14 +13,16 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type filter struct {
-	prefixRegex, dataRegex string
+type regex struct {
+	PrefixRegex                  string `json:"prefixRegex"`
+	LineRegex                    string `json:"lineRegex"`
+	prefixCompiled, lineCompiled *regexp.Regexp
 }
 
 type Conn struct {
 	*websocket.Conn
-	mutex   *sync.Mutex
-	filters []filter
+	mutex   *sync.RWMutex
+	regexes []regex
 	id      string
 }
 
@@ -49,8 +53,16 @@ func dropWebsock(conn *Conn) {
 }
 
 type websocketBody struct {
-	Event string        `json:"event"`
-	Args  []interface{} `json:"args"`
+	Event string          `json:"event"`
+	Args  json.RawMessage `json:"args"`
+}
+
+func newWebsocketBody(event string, args []interface{}) *websocketBody {
+	rawMessage, _ := json.Marshal(args)
+	return &websocketBody{
+		Event: event,
+		Args:  rawMessage,
+	}
 }
 
 func StartServer(addr string) {
@@ -65,7 +77,7 @@ func StartServer(addr string) {
 			log.Println(err)
 			return
 		}
-		conn := &Conn{Conn: orig, mutex: &sync.Mutex{}, id: uuid.New()}
+		conn := &Conn{Conn: orig, mutex: &sync.RWMutex{}, id: uuid.New()}
 		addWebsock(conn)
 		conn.readLoop()
 	})

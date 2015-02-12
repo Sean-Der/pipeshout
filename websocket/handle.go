@@ -1,14 +1,22 @@
 package websocket
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"reflect"
+	"regexp"
 )
 
 var events = map[string]interface{}{
-	"setFilters": func(conn *Conn, filters []filter) {
-
+	"setRegexes": func(conn *Conn, regexes []regex) {
+		for i, regex := range regexes {
+			regexes[i].prefixCompiled, _ = regexp.Compile(regex.PrefixRegex)
+			regexes[i].lineCompiled, _ = regexp.Compile(regex.LineRegex)
+		}
+		conn.mutex.Lock()
+		conn.regexes = regexes
+		conn.mutex.Unlock()
 	},
 }
 
@@ -18,13 +26,17 @@ func (conn *Conn) handle(body *websocketBody) {
 		log.Printf("Error getting func for event: %s err:%v", body.Event, err.Error())
 		return
 	}
-	if (funcType.NumIn() - 1) != len(body.Args) {
-		log.Printf("Arg mismatch for event %s: args: %v", body.Event, body.Args)
-		return
-	}
 	funcArgs := []reflect.Value{reflect.ValueOf(conn)}
 	if funcType.NumIn() > 1 {
-		for _, value := range body.Args {
+		serializedJSON := []interface{}{}
+		for i := 1; i < funcType.NumIn(); i++ {
+			serializedJSON = append(serializedJSON, reflect.New(funcType.In(i)).Interface())
+		}
+		if err := json.Unmarshal(body.Args, &serializedJSON); err != nil {
+			log.Println(err)
+			return
+		}
+		for _, value := range serializedJSON {
 			val := reflect.ValueOf(value)
 			if val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr {
 				val = val.Elem()
