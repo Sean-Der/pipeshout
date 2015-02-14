@@ -6,12 +6,15 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"code.google.com/p/go-uuid/uuid"
 )
 
 type Line struct {
 	Start  time.Time `json:"start"`
 	Prefix string    `json:"prefix"`
 	Line   string    `json:"line"`
+	Id     string    `json:"id"`
 }
 
 func handleConn(conn net.Conn) {
@@ -28,7 +31,7 @@ func handleConn(conn net.Conn) {
 			log.Printf("Line has no separator: %s", rawLine)
 			continue
 		}
-		addCacheLine(Line{Start: startTime, Prefix: rawLine[0:separator], Line: rawLine[separator+1:]})
+		addCacheLine(Line{Start: startTime, Prefix: rawLine[0:separator], Line: rawLine[separator+1:], Id: uuid.New()})
 	}
 }
 
