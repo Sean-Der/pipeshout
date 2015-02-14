@@ -2,7 +2,8 @@ package websocket
 
 import (
 	"fmt"
-	"time"
+
+	"github.com/Sean-Der/pipeshout/pipe"
 )
 
 func lineMatchRegexes(prefix, line string, regexes []regex) bool {
@@ -24,24 +25,42 @@ func lineMatchRegexes(prefix, line string, regexes []regex) bool {
 	return false
 }
 
-func EmitAddLine(start time.Time, prefix, line string) {
-	body := newWebsocketBody("addLine", []interface{}{start, prefix, line})
+func (conn *Conn) EmitSetLines() {
+	lines := pipe.GetLineCache()
+	goodLines := []pipe.Line{}
 
-	websocketTable.RLock()
-	defer websocketTable.RUnlock()
-	for _, conn := range websocketTable.conns {
-		conn.mutex.RLock()
-		if !lineMatchRegexes(prefix, line, conn.regexes) {
-			continue
+	conn.mutex.RLock()
+	for _, line := range lines {
+		if lineMatchRegexes(line.Prefix, line.Line, conn.regexes) {
+			goodLines = append(goodLines, line)
 		}
-		conn.mutex.RUnlock()
-		conn.emit(body)
 	}
+	conn.mutex.RUnlock()
 
+	conn.emit(newWebsocketBody("setLines", []interface{}{goodLines}))
 }
 
 func (conn *Conn) emit(body *websocketBody) {
 	conn.mutex.Lock()
 	defer conn.mutex.Unlock()
 	conn.WriteJSON(body)
+}
+
+func addLineEmitter() {
+	for {
+		line := <-pipe.LinesChan
+		body := newWebsocketBody("addLine", []interface{}{line})
+
+		websocketTable.RLock()
+		for _, conn := range websocketTable.conns {
+			conn.mutex.RLock()
+			if !lineMatchRegexes(line.Prefix, line.Line, conn.regexes) {
+				continue
+			}
+			conn.mutex.RUnlock()
+			conn.emit(body)
+		}
+		websocketTable.RUnlock()
+	}
+
 }

@@ -6,25 +6,29 @@ import (
 	"net"
 	"strings"
 	"time"
-
-	"github.com/Sean-Der/pipeshout/websocket"
 )
+
+type Line struct {
+	Start  time.Time `json:"start"`
+	Prefix string    `json:"prefix"`
+	Line   string    `json:"line"`
+}
 
 func handleConn(conn net.Conn) {
 
 	reader := bufio.NewReader(conn)
 	for {
 		startTime := time.Now()
-		line, err := reader.ReadString('\n')
+		rawLine, err := reader.ReadString('\n')
 		if err != nil {
 			return
 		}
-		separator := strings.Index(line, " ")
+		separator := strings.Index(rawLine, " ")
 		if separator == -1 {
-			log.Printf("Line has no separator: %s", line)
+			log.Printf("Line has no separator: %s", rawLine)
 			continue
 		}
-		websocket.EmitAddLine(startTime, line[0:separator], line[separator+1:])
+		addCacheLine(Line{Start: startTime, Prefix: rawLine[0:separator], Line: rawLine[separator+1:]})
 	}
 }
 

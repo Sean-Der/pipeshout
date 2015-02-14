@@ -79,10 +79,12 @@ func StartServer(addr string) {
 		}
 		conn := &Conn{Conn: orig, mutex: &sync.RWMutex{}, id: uuid.New()}
 		addWebsock(conn)
+		conn.EmitSetLines()
 		conn.readLoop()
 	})
-
 	http.Handle("/", http.FileServer(http.Dir("./pipelisten/web")))
+	go addLineEmitter()
+
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

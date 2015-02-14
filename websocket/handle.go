@@ -17,6 +17,7 @@ var events = map[string]interface{}{
 		conn.mutex.Lock()
 		conn.regexes = regexes
 		conn.mutex.Unlock()
+		conn.EmitSetLines()
 	},
 }
 
