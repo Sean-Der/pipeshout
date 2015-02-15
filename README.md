@@ -7,10 +7,10 @@ pipeshout is a small web app, that consumes data via a *Unix Domain Socket* and 
 Here are a few of its features live
 
 * **Streaming Input** - Pipeshout uses websockets, so feels just like using `tail`
-![alt text](http://i.imgur.com/dkcHcyL.gif "Streaming")
+![alt text](http://i.imgur.com/SHvJAE7.gif "Streaming")
 
 * **Regexes** - Apply regexes on prefix OR line, allowing you to quickly examine data
-![alt text](http://i.imgur.com/Er4hfNi.gif "Regexes")
+![alt text](http://i.imgur.com/HhkmgrA.gif "Regexes")
 
 * **Consumes Lines** - You aren't just tied to files! You can send it tcpdump, scheduled jobs or `sl`
 
